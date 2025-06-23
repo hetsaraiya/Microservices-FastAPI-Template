@@ -27,7 +27,7 @@ class KafkaManager:
             await self._start_producer()
             
             # Create topics if they don't exist
-            await self._create_topics()
+            # await self._create_topics()
             
             # Start consumers
             await self._start_consumers()
@@ -102,7 +102,7 @@ class KafkaManager:
             for topic, config in TOPIC_CONFIGS.items():
                 if topic not in existing_topics:
                     new_topic = NewTopic(
-                        name=topic,
+                        name=topic.value,
                         num_partitions=config.get("num_partitions", 1),
                         replication_factor=config.get("replication_factor", 1)
                     )
