@@ -3,14 +3,8 @@ import pathlib
 import os
 
 import decouple
-
-# Updated import for Pydantic v2
-try:
-    from pydantic_settings import BaseSettings
-    from pydantic import BaseModel, PostgresDsn
-except ImportError:
-    # Fallback for older versions
-    from pydantic import BaseSettings, BaseModel, PostgresDsn  # type: ignore
+from pydantic_settings import BaseSettings
+from pydantic import BaseModel, PostgresDsn
 
 ROOT_DIR: pathlib.Path = pathlib.Path(__file__).parent.parent.parent.parent.resolve()
 
@@ -180,6 +174,15 @@ class BackendBaseSettings(BaseSettings):
     REDIS_DB: int = config("REDIS_DB", cast=int, default=0)
     REDIS_PASSWORD: str | None = config("REDIS_PASSWORD", cast=str, default=None)
     REDIS_SSL: bool = config("REDIS_SSL", cast=bool, default=False)
+
+    # Kafka settings
+    KAFKA_BOOTSTRAP_SERVERS: str = config("KAFKA_BOOTSTRAP_SERVERS", cast=str, default="localhost:9092")
+    KAFKA_GROUP_ID: str = config("KAFKA_GROUP_ID", cast=str, default="user_service_group")
+    KAFKA_AUTO_OFFSET_RESET: str = config("KAFKA_AUTO_OFFSET_RESET", cast=str, default="latest")
+    KAFKA_ENABLE_AUTO_COMMIT: bool = config("KAFKA_ENABLE_AUTO_COMMIT", cast=bool, default=True)
+    KAFKA_SESSION_TIMEOUT_MS: int = config("KAFKA_SESSION_TIMEOUT_MS", cast=int, default=30000)
+    KAFKA_REQUEST_TIMEOUT_MS: int = config("KAFKA_REQUEST_TIMEOUT_MS", cast=int, default=40000)
+    KAFKA_RETRY_BACKOFF_MS: int = config("KAFKA_RETRY_BACKOFF_MS", cast=int, default=100)
 
     # Email settings
     EMAIL_SENDER: str = config("EMAIL_SENDER", cast=str, default="noreply@yourdomain.com")

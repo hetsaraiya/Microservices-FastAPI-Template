@@ -12,6 +12,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
 from loguru import logger
+import loguru
 
 from .config import (
     LogLevel, LogFormat, LoggingSettings, LogFormats,

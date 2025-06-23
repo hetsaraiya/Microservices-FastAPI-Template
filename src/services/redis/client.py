@@ -14,10 +14,10 @@ def get_redis_client() -> Redis:
             host=settings.REDIS_HOST,
             port=settings.REDIS_PORT,
             password=settings.REDIS_PASSWORD,
-            ssl=settings.REDIS_SSL,
-            ssl_cert_reqs=None,
-            socket_connect_timeout=5,
-            decode_responses=True,
+            # ssl=settings.REDIS_SSL,
+            # ssl_cert_reqs=None,
+            # socket_connect_timeout=5,
+            # decode_responses=True,
             db=0
         )
         redis_client.ping()  # Verify connection

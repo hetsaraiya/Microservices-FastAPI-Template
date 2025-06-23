@@ -95,8 +95,7 @@ class KafkaManager:
             await admin_client.start()
             
             # Get existing topics
-            metadata = await admin_client.list_topics()
-            existing_topics = set(metadata.topics.keys())
+            existing_topics = set(await admin_client.list_topics())
             
             # Create missing topics
             topics_to_create = []
@@ -127,6 +126,30 @@ class KafkaManager:
             
         except Exception as e:
             logger.error(f"Failed to publish to {topic}: {e}")
+            raise
+    
+    async def publish_message(self, topic: str, message: dict, key: str = None):
+        """
+        Publish a message to a Kafka topic
+        
+        Args:
+            topic: The topic to publish to
+            message: The message data to publish
+            key: Optional message key for partitioning
+        """
+        if not self.producer:
+            raise RuntimeError("Kafka producer not initialized")
+        
+        try:
+            await self.producer.send_and_wait(
+                topic=topic,
+                value=message,
+                key=key
+            )
+            logger.info(f"Message published to topic {topic}")
+            
+        except Exception as e:
+            logger.error(f"Failed to publish message to {topic}: {e}")
             raise
     
     def register_handler(self, topic: str, handler: Callable):
