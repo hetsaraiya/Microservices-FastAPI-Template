@@ -16,6 +16,8 @@ async def consume():
     try:
         # Subscribe to all topics using regex pattern (no await)
         consumer.subscribe(pattern=".*")
+        topics = await consumer.topics()
+        print(f"Name of all the topics are: {topics}")
         print("Subscribed to all topics. Waiting for messages...")
         while True:
             result = await consumer.getmany(timeout_ms=1000)

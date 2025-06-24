@@ -12,10 +12,8 @@ class BaseSchemaModel(pydantic.BaseModel):
         orm_mode: bool = True
         validate_assignment: bool = True
         allow_population_by_field_name: bool = True
-        json_encoders: dict = {datetime.datetime: format_datetime_into_isoformat}
         alias_generator: typing.Any = format_dict_key_to_camel_case
         populate_by_name = True
         aliases = {
             "client_data": "clientData"
         }
-        

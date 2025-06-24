@@ -1,8 +1,12 @@
 from typing import List, Optional, Dict, Any
 from fastapi import APIRouter, Depends, HTTPException, status, Request, Response, Body
 from pydantic import BaseModel, EmailStr
+from datetime import datetime
+import uuid
+import time
 
 from src.api.dependencies.repository import get_repository
+from src.api.dependencies.kafka import get_kafka_manager
 from src.api.dependencies.auth import (
     get_client_ip,
     get_device_info,
@@ -27,6 +31,8 @@ from src.utilities.exceptions.exceptions import SecurityException
 from src.utilities.logging.logger import logger
 from src.models.schemas.user import UserInLogin, UserInCreate
 from src.models.db.user import UserTypeEnum
+from src.services.kafka.topics import KafkaTopics
+from src.services.kafka.manager import KafkaManager
 
 router = APIRouter(prefix="/auth", tags=["authentication"])
 
@@ -35,7 +41,8 @@ async def register(
     request: Request,
     register_data: RegisterRequest,
     user_repo: UserCRUDRepository = Depends(get_repository(repo_type=UserCRUDRepository)),
-    jwt_repo: JwtRecordCRUDRepository = Depends(get_repository(repo_type=JwtRecordCRUDRepository))
+    jwt_repo: JwtRecordCRUDRepository = Depends(get_repository(repo_type=JwtRecordCRUDRepository)),
+    kafka_manager: KafkaManager = Depends(get_kafka_manager)
 ):
     """Register a new user and return authentication tokens"""
     try:
@@ -100,6 +107,30 @@ async def register(
         # Log successful registration
         logger.info(f"New user registered: {new_user.username} (ID: {new_user.id}, Type: {new_user.user_type})")
         
+        # Publish user.created event to Kafka
+        try:
+            logger.info(f"Publishing user.created event for user_id={new_user.id}")
+            event_data = {
+                "user_id": str(new_user.id),
+                "username": new_user.username,
+                "email": new_user.email,
+                "user_type": str(new_user.user_type),
+                "created_at": new_user.created_at,
+                "event_id": str(uuid.uuid4()),
+                "timestamp": int(time.time()),
+                "service": "user_management",
+                "event_type": "user_created"
+            }
+            await kafka_manager.publish_message(
+                topic=KafkaTopics.USER_CREATED.value,
+                key=str(new_user.id),
+                message=event_data
+            )
+            logger.info(f"Published user.created event for user_id={new_user.id}")
+        except Exception as e:
+            logger.error(f"Failed to publish user.created event: {e}")
+            # Continue with response even if Kafka fails
+        
         # Return response with tokens
         return JWTResponse(
             access_token=access_token,
@@ -128,7 +159,8 @@ async def login(
     request: Request,
     login_data: LoginRequest,
     user_repo: UserCRUDRepository = Depends(get_repository(repo_type=UserCRUDRepository)),
-    jwt_repo: JwtRecordCRUDRepository = Depends(get_repository(repo_type=JwtRecordCRUDRepository))
+    jwt_repo: JwtRecordCRUDRepository = Depends(get_repository(repo_type=JwtRecordCRUDRepository)),
+    kafka_manager: KafkaManager = Depends(get_kafka_manager)
 ):
     """Login endpoint that supports device-based authentication with enhanced device information"""
     try:
@@ -214,6 +246,28 @@ async def login(
         
         if refresh_token:
             response.refresh_token = refresh_token
+        
+        # Publish user login event to Kafka
+        try:
+            await kafka_manager.publish_message(
+                topic=KafkaTopics.USER_LOGIN.value,
+                key=str(user.id),
+                message={
+                    "user_id": str(user.id),
+                    "username": user.username,
+                    "email": user.email,
+                    "device_id": device_id,
+                    "ip_address": current_ip,
+                    "device_type": device_info.device_type,
+                    "login_at": int(time.time()),
+                    "event_type": "user_login",
+                    "service": "user_management"
+                }
+            )
+            logger.info(f"Published user login event for user_id={user.id}")
+        except Exception as e:
+            logger.error(f"Failed to publish user login event: {e}")
+            # Continue with response even if Kafka fails
             
         return response
         
@@ -321,7 +375,8 @@ async def refresh_token(
 async def logout(
     request: Request,
     token: str = Depends(oauth2_scheme),
-    jwt_repo: JwtRecordCRUDRepository = Depends(get_repository(repo_type=JwtRecordCRUDRepository))
+    jwt_repo: JwtRecordCRUDRepository = Depends(get_repository(repo_type=JwtRecordCRUDRepository)),
+    kafka_manager: KafkaManager = Depends(get_kafka_manager)
 ):
     """Logout from current device"""
     try:
@@ -336,6 +391,25 @@ async def logout(
         user_id = token_data.get("user_id")
         if device_id and user_id:
             await jwt_repo.blacklist_device_tokens(user_id, device_id)
+        
+        # Publish user logout event to Kafka
+        try:
+            await kafka_manager.publish_message(
+                topic=KafkaTopics.USER_LOGOUT.value,
+                key=str(user_id),
+                message={
+                    "user_id": str(user_id),
+                    "device_id": device_id,
+                    "ip_address": get_client_ip(request),
+                    "logout_at": int(time.time()),
+                    "event_type": "user_logout",
+                    "service": "user_management"
+                }
+            )
+            logger.info(f"Published user logout event for user_id={user_id}")
+        except Exception as e:
+            logger.error(f"Failed to publish user logout event: {e}")
+            # Continue with response even if Kafka fails
         
         return {"message": "Successfully logged out"}
         

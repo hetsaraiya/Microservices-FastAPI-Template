@@ -27,8 +27,8 @@ async def health_check(request: Request) -> Dict[str, Any]:
     }
     
     try:
-        from datetime import datetime
-        health_status["timestamp"] = datetime.utcnow().isoformat()
+        import time
+        health_status["timestamp"] = int(time.time())
         
         # Check database connection
         try:

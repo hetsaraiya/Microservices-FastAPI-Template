@@ -26,13 +26,13 @@ class KafkaTopics(str, Enum):
 
 # Topic configurations
 TOPIC_CONFIGS = {
-    KafkaTopics.USER_DETAILS_REQUEST: {
-        "num_partitions": 3,
+    KafkaTopics.USER_DETAILS_REQUEST.value: {
+        "num_partitions": 2,
         "replication_factor": 2,
         "retention_ms": 3600000,  # 1 hour
     },
-    KafkaTopics.USER_CREATED: {
-        "num_partitions": 5,
+    KafkaTopics.USER_CREATED.value: {
+        "num_partitions": 2,
         "replication_factor": 2,
         "retention_ms": 604800000,  # 7 days
     },

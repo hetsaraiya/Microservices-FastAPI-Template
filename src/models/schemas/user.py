@@ -36,8 +36,8 @@ class UserWithToken(BaseSchemaModel):
     is_verified: bool
     is_active: bool
     is_logged_in: bool
-    created_at: datetime.datetime
-    updated_at: datetime.datetime | None
+    created_at: int
+    updated_at: int | None
 
 
 class UserInResponse(BaseSchemaModel):

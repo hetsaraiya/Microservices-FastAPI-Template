@@ -45,11 +45,11 @@ class User(Base):  # type: ignore
     is_superuser: SQLAlchemyMapped[bool] = sqlalchemy_mapped_column(sqlalchemy.Boolean, default=False)
     is_active: SQLAlchemyMapped[bool] = sqlalchemy_mapped_column(sqlalchemy.Boolean, default=True)
 
-    created_at: SQLAlchemyMapped[datetime.datetime] = sqlalchemy_mapped_column(
-        sqlalchemy.DateTime(timezone=True), nullable=False, server_default=sqlalchemy_functions.now()
+    created_at: SQLAlchemyMapped[int] = sqlalchemy_mapped_column(
+        sqlalchemy.BigInteger(), nullable=False, server_default=sqlalchemy.text("extract(epoch from now())::bigint")
     )
-    updated_at: SQLAlchemyMapped[datetime.datetime] = sqlalchemy_mapped_column(
-        sqlalchemy.DateTime(timezone=True),
+    updated_at: SQLAlchemyMapped[int] = sqlalchemy_mapped_column(
+        sqlalchemy.BigInteger(),
         nullable=True,
         server_onupdate=sqlalchemy.schema.FetchedValue(for_update=True),
     )

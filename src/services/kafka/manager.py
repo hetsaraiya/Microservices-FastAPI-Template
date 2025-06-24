@@ -68,9 +68,9 @@ class KafkaManager:
         
         # Consumer for handling requests from other services
         request_consumer = AIOKafkaConsumer(
-            KafkaTopics.USER_DETAILS_REQUEST,
-            KafkaTopics.USER_VALIDATION_REQUEST,
-            KafkaTopics.USER_PERMISSIONS_REQUEST,
+            KafkaTopics.USER_DETAILS_REQUEST.value,
+            KafkaTopics.USER_VALIDATION_REQUEST.value,
+            KafkaTopics.USER_PERMISSIONS_REQUEST.value,
             bootstrap_servers=self.config.bootstrap_servers,
             group_id=f"{self.config.group_id}_requests",
             value_deserializer=self.serializer.deserialize,
@@ -141,7 +141,7 @@ class KafkaManager:
             raise RuntimeError("Kafka producer not initialized")
         
         try:
-            await self.producer.send_and_wait(
+            await self.producer.send(
                 topic=topic,
                 value=message,
                 key=key

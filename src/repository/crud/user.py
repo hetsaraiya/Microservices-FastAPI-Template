@@ -1,3 +1,4 @@
+import time
 import typing
 
 import sqlalchemy
@@ -18,7 +19,8 @@ class UserCRUDRepository(BaseCRUDRepository):
             username=user_create.username, 
             email=user_create.email, 
             is_logged_in=True,
-            user_type=user_create.user_type.value if user_create.user_type else UserTypeEnum.RIDER.value
+            user_type=user_create.user_type.value if user_create.user_type else UserTypeEnum.RIDER.value,
+            created_at=int(time.time())
         )
 
         new_user.set_hash_salt(hash_salt=pwd_generator.generate_salt)
@@ -83,15 +85,12 @@ class UserCRUDRepository(BaseCRUDRepository):
 
     async def update_user_by_id(self, id: int, user_update: UserInUpdate) -> User:
         new_user_data = user_update.dict()
-
         select_stmt = sqlalchemy.select(User).where(User.id == id)
         query = await self.async_session.execute(statement=select_stmt)
         update_user = query.scalar()
-
         if not update_user:
             raise EntityDoesNotExist(f"User with id `{id}` does not exist!")  # type: ignore
-
-        update_stmt = sqlalchemy.update(table=User).where(User.id == update_user.id).values(updated_at=sqlalchemy_functions.now())  # type: ignore
+        update_stmt = sqlalchemy.update(table=User).where(User.id == update_user.id).values(updated_at=int(time.time()))  # type: ignore
 
         if new_user_data["username"]:
             update_stmt = update_stmt.values(username=new_user_data["username"])

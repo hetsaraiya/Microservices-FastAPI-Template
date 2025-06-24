@@ -214,7 +214,7 @@ def get_device_info(request: Request, device_id: Optional[str] = None, client_da
     
     # Create a base device info object
     device_info = DeviceInfo(
-        android_id=client_data.get("android_id", device_id),  # Use android_id as the unique identifier
+        android_id=client_data.get("android_id", device_id) if client_data else "device_id",  # Use android_id as the unique identifier
         device_name=device_name,
         device_type=ua_info["device_type"],
         ip_address=ip_address,

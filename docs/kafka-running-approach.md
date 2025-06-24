@@ -91,3 +91,33 @@ Kafka with Zookeeper is the traditional and well-established way of running Kafk
 Kafka without Zookeeper (KRaft Mode) is an exciting new approach, ideal for simpler setups where you want to eliminate the overhead of managing Zookeeper. It is still evolving, so it’s suitable for testing or small-scale use cases but may require more testing in production environments.
 
 Choose the setup based on your specific use case, scale, and need for simplicity.
+
+
+
+
+
+docker exec tender_swirles bash -c "
+/opt/kafka/bin/kafka-topics.sh --create --if-not-exists --topic user.created --bootstrap-server localhost:9092 --partitions 5 --replication-factor 1;
+/opt/kafka/bin/kafka-topics.sh --create --if-not-exists --topic user.updated --bootstrap-server localhost:9092 --partitions 1 --replication-factor 1;
+/opt/kafka/bin/kafka-topics.sh --create --if-not-exists --topic user.deleted --bootstrap-server localhost:9092 --partitions 1 --replication-factor 1;
+/opt/kafka/bin/kafka-topics.sh --create --if-not-exists --topic user.role.changed --bootstrap-server localhost:9092 --partitions 1 --replication-factor 1;
+/opt/kafka/bin/kafka-topics.sh --create --if-not-exists --topic user.status.changed --bootstrap-server localhost:9092 --partitions 1 --replication-factor 1;
+/opt/kafka/bin/kafka-topics.sh --create --if-not-exists --topic user.login --bootstrap-server localhost:9092 --partitions 1 --replication-factor 1;
+/opt/kafka/bin/kafka-topics.sh --create --if-not-exists --topic user.logout --bootstrap-server localhost:9092 --partitions 1 --replication-factor 1;
+/opt/kafka/bin/kafka-topics.sh --create --if-not-exists --topic user.details.request --bootstrap-server localhost:9092 --partitions 3 --replication-factor 1;
+/opt/kafka/bin/kafka-topics.sh --create --if-not-exists --topic user.validation.request --bootstrap-server localhost:9092 --partitions 1 --replication-factor 1;
+/opt/kafka/bin/kafka-topics.sh --create --if-not-exists --topic user.permissions.request --bootstrap-server localhost:9092 --partitions 1 --replication-factor 1;
+/opt/kafka/bin/kafka-topics.sh --create --if-not-exists --topic user.details.response --bootstrap-server localhost:9092 --partitions 1 --replication-factor 1;
+/opt/kafka/bin/kafka-topics.sh --create --if-not-exists --topic user.validation.response --bootstrap-server localhost:9092 --partitions 1 --replication-factor 1;
+/opt/kafka/bin/kafka-topics.sh --create --if-not-exists --topic user.permissions.response --bootstrap-server localhost:9092 --partitions 1 --replication-factor 1;
+/opt/kafka/bin/kafka-topics.sh --create --if-not-exists --topic system.notification --bootstrap-server localhost:9092 --partitions 1 --replication-factor 1;
+/opt/kafka/bin/kafka-topics.sh --create --if-not-exists --topic audit.log --bootstrap-server localhost:9092 --partitions 1 --replication-factor 1
+"
+
+
+/opt/kafka/bin/kafka-topics.sh --bootstrap-server localhost:9092 --delete --topic KafkaTopics.USER_DETAILS_REQUEST
+/opt/kafka/bin/kafka-topics.sh --bootstrap-server localhost:9092 --delete --topic KafkaTopics.USER_PERMISSIONS_REQUEST
+/opt/kafka/bin/kafka-topics.sh --bootstrap-server localhost:9092 --delete --topic KafkaTopics.USER_VALIDATION_REQUEST
+
+
+/opt/kafka/bin/kafka-consumer-groups.sh --bootstrap-server localhost:9092 --group all_topics_consumer_group --describe

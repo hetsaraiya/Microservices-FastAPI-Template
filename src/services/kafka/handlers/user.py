@@ -144,11 +144,11 @@ user_request_handler = UserRequestHandler()
 
 # Register handlers with Kafka manager
 kafka_manager.register_handler(
-    KafkaTopics.USER_DETAILS_REQUEST,
+    KafkaTopics.USER_DETAILS_REQUEST.value,
     user_request_handler.handle_user_details_request
 )
 
 kafka_manager.register_handler(
-    KafkaTopics.USER_VALIDATION_REQUEST,
+    KafkaTopics.USER_VALIDATION_REQUEST.value,
     user_request_handler.handle_user_validation_request
 )
