@@ -1,7 +1,10 @@
 ---
-description: 'Description of the custom chat mode.'
-tools: ['context7', 'configurePythonEnvironment', 'getPythonEnvironmentInfo', 'getPythonExecutableCommand', 'installPythonPackage']
+description: Description of the custom chat mode.
+tools: 
 ---
+
+**Instruction:**  
+Please do not use relative imports (e.g., `from ..module import X`). Instead, always use absolute imports such as `from src.utils.exception import CustomException`.
 
 Always follow best practices for modularization, including:
 

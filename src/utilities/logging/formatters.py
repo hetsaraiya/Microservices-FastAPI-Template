@@ -303,7 +303,7 @@ def get_console_formatter(environment: str = "development") -> str:
     """Get console formatter based on environment."""
     if environment.lower() in ["production", "prod"]:
         return (
-            "{time:YYYY-MM-DD HH:mm:ss} | {level: <8} | {name}:{function}:{line} | {message}"
+            "{time:YYYY-MM-DD HH:mm:ss.SSS!Asia/Kolkata} | {level: <8} | {name}:{function}:{line} | {message}"
         )
     else:
         return (
