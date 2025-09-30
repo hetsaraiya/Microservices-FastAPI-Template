@@ -7,7 +7,9 @@ from src.models.schemas.jwt import DeviceInfo
 from src.repository.crud.base import BaseCRUDRepository
 
 
-class DeviceCRUDRepository(BaseCRUDRepository):
+class DeviceCRUDRepository(BaseCRUDRepository[Device]):
+    def __init__(self, async_session):
+        super().__init__(async_session, Device)
     async def get_device_by_id(self, device_id: str) -> Optional[Device]:
         """Get a device by its device_id"""
         stmt = select(Device).where(Device.device_id == device_id)

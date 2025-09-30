@@ -2,7 +2,7 @@
 Example integration of Redis and Kafka connections in route handlers.
 
 This file demonstrates how to use the Redis and Kafka connections
-that are established during application startup.
+through dependency injection for cleaner and more testable code.
 """
 
 from fastapi import APIRouter, Depends, Request, HTTPException, status
@@ -11,8 +11,10 @@ import json
 import uuid
 from datetime import datetime
 
-from src.services.connections import get_redis_from_app, get_kafka_from_app
+from src.api.dependencies.redis import get_redis_client
+from src.api.dependencies.kafka import get_kafka_manager
 from src.services.kafka.topics import KafkaTopics
+from src.services.kafka.manager import KafkaManager
 from src.utilities.logging.logger import logger
 
 router = APIRouter(prefix="/example", tags=["example"])
@@ -22,14 +24,12 @@ router = APIRouter(prefix="/example", tags=["example"])
 async def cache_user_data(
     user_id: str,
     user_data: Dict[str, Any],
-    request: Request
+    redis_client=Depends(get_redis_client)
 ) -> Dict[str, str]:
     """
-    Example: Cache user data in Redis
+    Example: Cache user data in Redis using dependency injection.
     """
     try:
-        redis_client = get_redis_from_app(request.app)
-        
         # Create cache key
         cache_key = f"user:{user_id}"
         
@@ -66,14 +66,12 @@ async def cache_user_data(
 @router.get("/cache-user/{user_id}")
 async def get_cached_user_data(
     user_id: str,
-    request: Request
+    redis_client=Depends(get_redis_client)
 ) -> Dict[str, Any]:
     """
-    Example: Retrieve cached user data from Redis
+    Example: Retrieve cached user data from Redis using dependency injection.
     """
     try:
-        redis_client = get_redis_from_app(request.app)
-        
         # Get cache key
         cache_key = f"user:{user_id}"
         
@@ -115,14 +113,12 @@ async def get_cached_user_data(
 @router.post("/publish-user-event")
 async def publish_user_event(
     event_data: Dict[str, Any],
-    request: Request
+    kafka_manager: KafkaManager = Depends(get_kafka_manager)
 ) -> Dict[str, str]:
     """
-    Example: Publish user event to Kafka
+    Example: Publish user event to Kafka using dependency injection.
     """
     try:
-        kafka_manager = get_kafka_from_app(request.app)
-        
         # Add metadata to event
         event_data.update({
             "event_id": str(uuid.uuid4()),
@@ -161,13 +157,14 @@ async def publish_user_event(
 
 
 @router.get("/session-info")
-async def get_session_info(request: Request) -> Dict[str, Any]:
+async def get_session_info(
+    request: Request,
+    redis_client=Depends(get_redis_client)
+) -> Dict[str, Any]:
     """
-    Example: Get session information using Redis for session storage
+    Example: Get session information using Redis for session storage with dependency injection.
     """
     try:
-        redis_client = get_redis_from_app(request.app)
-        
         # Get session ID from headers or cookies (example)
         session_id = request.headers.get("X-Session-ID")
         
