@@ -13,7 +13,9 @@ from src.utilities.exceptions.database import EntityAlreadyExists, EntityDoesNot
 from src.utilities.exceptions.password import PasswordDoesNotMatch
 
 
-class UserCRUDRepository(BaseCRUDRepository):
+class UserCRUDRepository(BaseCRUDRepository[User]):
+    def __init__(self, async_session):
+        super().__init__(async_session, User)
     async def create_user(self, user_create: UserInCreate) -> User:
         new_user = User(
             username=user_create.username, 

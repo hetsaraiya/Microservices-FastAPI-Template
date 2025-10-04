@@ -13,7 +13,9 @@ from src.models.schemas.jwt import DeviceInfo
 from src.utilities.logging.logger import logger
 
 
-class JwtRecordCRUDRepository(BaseCRUDRepository):
+class JwtRecordCRUDRepository(BaseCRUDRepository[JwtRecord]):
+    def __init__(self, async_session):
+        super().__init__(async_session, JwtRecord)
     async def create_jwt_record(self, jwt: str, user_id: int, device_info: DeviceInfo, token_type: str = "access", expires_in: int = None) -> JwtRecord:
         """
         Create a JWT record with detailed device information
