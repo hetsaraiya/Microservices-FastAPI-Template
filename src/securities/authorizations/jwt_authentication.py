@@ -15,7 +15,7 @@ from src.repository.crud.user import UserCRUDRepository
 from src.api.dependencies.repository import get_repository
 from src.models.db.user import User
 from src.config.manager import settings
-from src.api.dependencies.auth import get_client_ip, get_device_info
+from src.api.dependencies.auth import get_client_ip
 from src.repository.database import async_db
 
 
@@ -99,7 +99,6 @@ async def jwt_authentication(
         token_data = jwt_generator.retrieve_details_from_token(token)
         user_id = token_data.get("user_id")
         email = token_data.get("email")
-        device_id = token_data.get("device_id")
         
         # Verify user exists
         current_user = await get_current_user(user_id=user_id)
@@ -117,7 +116,6 @@ async def jwt_authentication(
         # Add user and token data to request state for later use
         request.state.user = current_user
         request.state.token_data = token_data
-        request.state.device_id = device_id
 
         return {
             "user": current_user,

@@ -91,12 +91,9 @@ class BackendBaseSettings(BaseSettings):
     JWT_ACCESS_TOKEN_EXPIRATION_TIME: int = JWT_MIN * JWT_HOUR * JWT_DAY
     
     # JWT Device and Security Settings
-    JWT_MAX_DEVICES: int = config("JWT_MAX_DEVICES", default=5, cast=int)
     JWT_IP_CHECK_ENABLED: bool = config("JWT_IP_CHECK_ENABLED", default=False, cast=bool)
-    JWT_DEVICE_SECRET: str = config("JWT_DEVICE_SECRET", default="device-secret-key", cast=str)
     JWT_REFRESH_TOKEN_EXPIRATION_TIME: int = config("JWT_REFRESH_TOKEN_EXPIRATION_TIME", default=30, cast=int)  # Days
     JWT_SUSPICIOUS_ACTIVITY_MONITORING: bool = config("JWT_SUSPICIOUS_ACTIVITY_MONITORING", default=True, cast=bool)
-    JWT_ANDROID_DATA_COLLECTION: bool = config("JWT_ANDROID_DATA_COLLECTION", default=True, cast=bool)
 
     IS_ALLOWED_CREDENTIALS: bool = config("IS_ALLOWED_CREDENTIALS", cast=bool)
     ALLOWED_ORIGINS: list[str] = [
@@ -167,22 +164,6 @@ class BackendBaseSettings(BaseSettings):
     HASHING_ALGORITHM_LAYER_2: str = config("HASHING_ALGORITHM_LAYER_2", cast=str)
     HASHING_SALT: str = config("HASHING_SALT", cast=str)
     JWT_ALGORITHM: str = config("JWT_ALGORITHM", cast=str)
-
-    # Redis settings
-    REDIS_HOST: str = config("REDIS_HOST", cast=str, default="localhost")
-    REDIS_PORT: int = config("REDIS_PORT", cast=int, default=6379)
-    REDIS_DB: int = config("REDIS_DB", cast=int, default=0)
-    REDIS_PASSWORD: str | None = config("REDIS_PASSWORD", cast=str, default=None)
-    REDIS_SSL: bool = config("REDIS_SSL", cast=bool, default=False)
-
-    # Kafka settings
-    KAFKA_BOOTSTRAP_SERVERS: str = config("KAFKA_BOOTSTRAP_SERVERS", cast=str, default="localhost:9092")
-    KAFKA_GROUP_ID: str = config("KAFKA_GROUP_ID", cast=str, default="user_service_group")
-    KAFKA_AUTO_OFFSET_RESET: str = config("KAFKA_AUTO_OFFSET_RESET", cast=str, default="latest")
-    KAFKA_ENABLE_AUTO_COMMIT: bool = config("KAFKA_ENABLE_AUTO_COMMIT", cast=bool, default=True)
-    KAFKA_SESSION_TIMEOUT_MS: int = config("KAFKA_SESSION_TIMEOUT_MS", cast=int, default=30000)
-    KAFKA_REQUEST_TIMEOUT_MS: int = config("KAFKA_REQUEST_TIMEOUT_MS", cast=int, default=40000)
-    KAFKA_RETRY_BACKOFF_MS: int = config("KAFKA_RETRY_BACKOFF_MS", cast=int, default=100)
 
     # Email settings
     EMAIL_SENDER: str = config("EMAIL_SENDER", cast=str, default="noreply@yourdomain.com")

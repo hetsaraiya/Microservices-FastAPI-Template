@@ -19,9 +19,9 @@ class JwtRecord(Base):
         UUID(as_uuid=True), ForeignKey("user.id"), nullable=False, index=True
     )
     
-    # Reference to device - now using android_id
-    android_id: SQLAlchemyMapped[str] = sqlalchemy_mapped_column(sqlalchemy.String(length=255), 
-                                                                ForeignKey("device.android_id"), nullable=True, index=True)
+    # Device reference removed - no longer tracking devices
+    # android_id: SQLAlchemyMapped[str] = sqlalchemy_mapped_column(sqlalchemy.String(length=255), 
+    #                                                             ForeignKey("device.android_id"), nullable=True, index=True)
     
     # Token status
     is_blacklisted: SQLAlchemyMapped[bool] = sqlalchemy_mapped_column(sqlalchemy.Boolean, nullable=False, default=False)
@@ -43,9 +43,7 @@ class JwtRecord(Base):
         sqlalchemy.BigInteger, nullable=True
     )
     
-    # Relationship with Device model
-    device = relationship("Device", back_populates="jwt_records")
-    # Add relationship with User model
+    # Relationship with User model only
     user = relationship("User", backref="jwt_records")
 
     __mapper_args__ = {"eager_defaults": True}

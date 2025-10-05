@@ -7,7 +7,7 @@ from jose import jwt as jose_jwt, JWTError as JoseJWTError
 
 from src.config.manager import settings
 from src.models.db.user import User
-from src.models.schemas.jwt import JWTUser, JWToken, DeviceInfo
+from src.models.schemas.jwt import JWTUser, JWToken
 from src.utilities.exceptions.database import EntityDoesNotExist
 from src.utilities.exceptions.exceptions import SecurityException
 from src.utilities.logging.logger import logger
@@ -49,17 +49,13 @@ class JWTGenerator:
 
         return jose_jwt.encode(to_encode, key=settings.JWT_SECRET_KEY, algorithm=settings.JWT_ALGORITHM)
 
-    def generate_access_token(self, user: User, device_info: DeviceInfo) -> Tuple[str, int, uuid.UUID]:
+    def generate_access_token(self, user: User) -> Tuple[str, int]:
         """
-        Generate an access token with device information
-        Returns the token, expiration time in seconds, and the device ID
+        Generate an access token
+        Returns the token and expiration time in seconds
         """
         if not user:
             raise EntityDoesNotExist("Cannot generate JWT token without User entity!")
-
-        # If no device ID provided, generate one
-        if not device_info.device_id:
-            device_info.device_id = str(uuid.uuid4())
 
         # Calculate expiration
         expiration_minutes = settings.JWT_ACCESS_TOKEN_EXPIRATION_TIME
@@ -74,16 +70,6 @@ class JWTGenerator:
             user_id=user.id
         ).dict()
         
-        # Add device info to payload
-        token_data.update({
-            "device": {
-                "id": device_info.device_id,
-                "name": device_info.device_name,
-                "type": device_info.device_type,
-                "hash": device_info.device_hash
-            }
-        })
-
         # Generate token with unique JWT ID
         jti = str(uuid.uuid4())
         token = self._generate_jwt_token(
@@ -93,12 +79,12 @@ class JWTGenerator:
             subject=settings.JWT_SUBJECT
         )
 
-        return token, expiration_seconds, device_info.android_id
+        return token, expiration_seconds
         
-    def generate_refresh_token(self, user: User, device_info: DeviceInfo) -> Tuple[str, int, uuid.UUID]:
+    def generate_refresh_token(self, user: User) -> Tuple[str, int]:
         """
-        Generate a refresh token with device information
-        Returns the token, expiration time in seconds, and the device ID
+        Generate a refresh token
+        Returns the token and expiration time in seconds
         """
         if not user:
             raise EntityDoesNotExist("Cannot generate refresh token without User entity!")
@@ -111,7 +97,6 @@ class JWTGenerator:
         # Create token payload (include minimal data for security)
         token_data = {
             "user_id": user.id,
-            "device_id": device_info.device_id,
             "token_type": "refresh"
         }
 
@@ -124,7 +109,7 @@ class JWTGenerator:
             subject="refresh"
         )
 
-        return token, expiration_seconds, device_info.device_id
+        return token, expiration_seconds
 
     def retrieve_details_from_token(self, token: str) -> Dict[str, Any]:
         try:
@@ -140,14 +125,12 @@ class JWTGenerator:
             if subject == "refresh":
                 # This is a refresh token - simplified structure
                 user_id = payload.get("user_id")
-                device_id = payload.get("device_id")
                 
-                if not user_id or not device_id:
+                if not user_id:
                     raise SecurityException("Invalid refresh token payload structure")
                 
                 return {
                     "user_id": user_id,
-                    "device_id": device_id,
                     "token_type": "refresh",
                     "jti": payload.get("jti"),
                     "exp": payload.get("exp"),
@@ -163,10 +146,6 @@ class JWTGenerator:
             if not username or not email or not user_id:
                 raise SecurityException("Invalid JWT payload structure")
                 
-            # Extract device info
-            device_info = payload.get("device", {})
-            device_id = device_info.get("id") if device_info else None
-            
             # Extract JWT ID
             jti = payload.get("jti")
             if not jti:
@@ -178,7 +157,6 @@ class JWTGenerator:
                 "email": email,
                 "user_type": user_type,
                 "user_id": user_id,
-                "device_id": device_id,
                 "jti": jti,
                 "token_type": "access",
                 "raw_payload": payload

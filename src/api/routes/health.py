@@ -2,54 +2,25 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from typing import Dict, Any, Optional
 import asyncio
 
-from src.api.dependencies.redis import get_redis_client
-from src.api.dependencies.kafka import get_kafka_manager
-from src.services.kafka.manager import KafkaManager
 from src.utilities.logging.logger import logger
 
 router = APIRouter(prefix="/health", tags=["health"])
 
 
-def get_redis_client_optional(request: Request):
-    """
-    Optional Redis client dependency that returns None if not available.
-    """
-    try:
-        from src.services.connections import get_redis_from_app
-        return get_redis_from_app(request.app)
-    except:
-        return None
-
-
-def get_kafka_manager_optional(request: Request):
-    """
-    Optional Kafka manager dependency that returns None if not available.
-    """
-    try:
-        from src.services.connections import get_kafka_from_app
-        return get_kafka_from_app(request.app)
-    except:
-        return None
-
-
 @router.get("/", response_model=Dict[str, Any])
 async def health_check(
-    request: Request,
-    redis_client=Depends(get_redis_client_optional),
-    kafka_manager=Depends(get_kafka_manager_optional)
+    request: Request
 ) -> Dict[str, Any]:
     """
-    Health check endpoint that verifies all service connections.
+    Health check endpoint that verifies database connection.
     
     Returns:
-        Dict containing the health status of all services
+        Dict containing the health status of services
     """
     health_status = {
         "status": "healthy",
         "services": {
-            "database": "unknown",
-            "redis": "unknown", 
-            "kafka": "unknown"
+            "database": "unknown"
         },
         "timestamp": None
     }
@@ -69,39 +40,9 @@ async def health_check(
             logger.error(f"Database health check failed: {e}")
             health_status["services"]["database"] = "unhealthy"
         
-        # Check Redis connection
-        try:
-            if hasattr(request.app.state, "redis_available") and not request.app.state.redis_available:
-                health_status["services"]["redis"] = "disabled"
-            elif redis_client:
-                await asyncio.to_thread(redis_client.ping)
-                health_status["services"]["redis"] = "healthy"
-            else:
-                health_status["services"]["redis"] = "disconnected"
-        except Exception as e:
-            logger.error(f"Redis health check failed: {e}")
-            health_status["services"]["redis"] = "unhealthy"
-        
-        # Check Kafka connection
-        try:
-            if hasattr(request.app.state, "kafka_available") and not request.app.state.kafka_available:
-                health_status["services"]["kafka"] = "disabled"
-            elif kafka_manager and kafka_manager._running:
-                health_status["services"]["kafka"] = "healthy"
-            else:
-                health_status["services"]["kafka"] = "disconnected"
-        except Exception as e:
-            logger.error(f"Kafka health check failed: {e}")
-            health_status["services"]["kafka"] = "unhealthy"
-        
         # Overall status
-        unhealthy_services = [
-            service for service, status in health_status["services"].items() 
-            if status in ["unhealthy", "disconnected"]
-        ]
-        
-        if unhealthy_services:
-            health_status["status"] = "degraded" if len(unhealthy_services) < len(health_status["services"]) else "unhealthy"
+        if health_status["services"]["database"] in ["unhealthy", "disconnected"]:
+            health_status["status"] = "unhealthy"
         
         return health_status
         
@@ -110,73 +51,4 @@ async def health_check(
         raise HTTPException(status_code=503, detail="Service health check failed")
 
 
-@router.get("/redis", response_model=Dict[str, Any])
-async def redis_health_check(
-    redis_client=Depends(get_redis_client_optional)
-) -> Dict[str, Any]:
-    """
-    Dedicated Redis health check endpoint.
-    
-    Returns:
-        Dict containing Redis connection status and info
-    """
-    try:
-        if not redis_client:
-            raise HTTPException(
-                status_code=503,
-                detail="Redis client not initialized"
-            )
-        
-        # Test connection with ping
-        await asyncio.to_thread(redis_client.ping)
-        
-        # Get Redis info
-        info = await asyncio.to_thread(redis_client.info)
-        
-        return {
-            "status": "healthy",
-            "service": "redis",
-            "version": info.get("redis_version", "unknown"),
-            "connected_clients": info.get("connected_clients", 0),
-            "used_memory_human": info.get("used_memory_human", "unknown"),
-            "timestamp": __import__('datetime').datetime.utcnow().isoformat()
-        }
-        
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Redis health check failed: {e}")
-        raise HTTPException(status_code=503, detail=f"Redis health check failed: {str(e)}")
 
-
-@router.get("/kafka", response_model=Dict[str, Any])
-async def kafka_health_check(
-    kafka_manager=Depends(get_kafka_manager_optional)
-) -> Dict[str, Any]:
-    """
-    Dedicated Kafka health check endpoint.
-    
-    Returns:
-        Dict containing Kafka connection status
-    """
-    try:
-        if not kafka_manager:
-            raise HTTPException(
-                status_code=503,
-                detail="Kafka manager not initialized"
-            )
-        
-        return {
-            "status": "healthy" if kafka_manager._running else "disconnected",
-            "service": "kafka",
-            "running": kafka_manager._running,
-            "producer_connected": kafka_manager.producer is not None,
-            "consumers_count": len(kafka_manager.consumers),
-            "timestamp": __import__('datetime').datetime.utcnow().isoformat()
-        }
-        
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Kafka health check failed: {e}")
-        raise HTTPException(status_code=503, detail=f"Kafka health check failed: {str(e)}")
